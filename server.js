@@ -9,13 +9,13 @@ var simulator = {
             x: 5,
             y: 5
         },
-        body:[0, 0, 0, 0] // directions or item id
+        body: new Array(10) // directions or item id
     }],
     moveSnake: function(){
         this.snakes.forEach(snake => {
             switch(snake.head_direction){
                 case 0: // up
-                    snake.head_pos.y -= 1;
+                    snake.head_pos.y += 1;
                     break;
                 case 1: // down
                     snake.head_pos.y -= 1;
@@ -24,14 +24,20 @@ var simulator = {
                     snake.head_pos.x -= 1;
                     break;
                 case 3: // right
-                    snake.head_pos.x -= 1;
+                    snake.head_pos.x += 1;
                     break;
                 default:
                     throw new Error("없는 방향입니다.");
             };
-        })
+
+            snake.body.pop();
+            snake.body.unshift(snake.head_direction);
+                
+            });
+    },
+    changeHeadDirection: function(direction){
+        this.snakes.forEach(snake => snake.head_direction = direction);
     }
-    
 };
 
 var sender = {
@@ -45,7 +51,7 @@ var sender = {
 };
 
 function sendData(){
-    sender.sendText(simulator.snakes[0].head_pos);
+    sender.sendText(simulator.snakes);
 };
 
 function steppingTime(){
@@ -66,18 +72,8 @@ wss.on('connection', (ws, req) => {
         console.log("ws was added!!");
     }
     ws.on('message', (message) => {
-        let sendData = {event: 'res', data: null};
-        message = JSON.parse(message);
-        switch (message.event) {
-            case 'open':
-                console.log("Received: %s", message.event);
-                break;
-            case "req":
-                sendData.data = message.data;
-                ws.send(JSON.stringify(sendData));
-                break;
-            default:
-        }
+        let received_message  = Number(message);
+        simulator.changeHeadDirection(received_message);
     });
 
 
